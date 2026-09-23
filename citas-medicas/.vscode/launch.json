@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "CitasMedicasApplication",
+      "request": "launch",
+      "mainClass": "com.clinica.citas.CitasMedicasApplication",
+      "projectName": "citas-medicas"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+# Backend Java
+citas-medicas/target/
+citas-medicas/*.log
+*.class
+
+# Frontend Node
+citas-frontend/node_modules/
+citas-frontend/dist/
+citas-frontend/dist-ssr/
+citas-frontend/*.local
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.iml
+.DS_Store
+Thumbs.db
