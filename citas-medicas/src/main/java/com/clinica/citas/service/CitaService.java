@@ -44,7 +44,13 @@ public class CitaService {
         validarDisponibilidad(cita.getMedico().getId(), cita.getFechaHora());
         validarPacienteLibre(cita.getPaciente().getId(), cita.getFechaHora());
         cita.setEstado(EstadoCita.PENDIENTE);
-        return citaRepository.save(cita);
+        cita.setModalidad(normalizarModalidad(cita.getModalidad()));
+        Cita guardada = citaRepository.save(cita);
+        if ("TELECONSULTA".equals(guardada.getModalidad())) {
+            guardada.setLinkTeleconsulta("https://meet.jit.si/clinica-cita-" + guardada.getId());
+            guardada = citaRepository.save(guardada);
+        }
+        return guardada;
     }
 
     // Automatizacion: asigna el primer medico de la especialidad que este libre en esa hora
@@ -68,7 +74,13 @@ public class CitaService {
                 cita.setFechaHora(req.getFechaHora());
                 cita.setMotivo(req.getMotivo());
                 cita.setEstado(EstadoCita.PENDIENTE);
-                return citaRepository.save(cita);
+                cita.setModalidad(normalizarModalidad(req.getModalidad()));
+                Cita guardada = citaRepository.save(cita);
+                if ("TELECONSULTA".equals(guardada.getModalidad())) {
+                    guardada.setLinkTeleconsulta("https://meet.jit.si/clinica-cita-" + guardada.getId());
+                    guardada = citaRepository.save(guardada);
+                }
+                return guardada;
             }
         }
         throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -106,9 +118,13 @@ public class CitaService {
         }
     }
 
-    // Horario laboral: Lun-Sab 07:00-19:00, no domingos
+    // Horario laboral: Lun-Sab 07:00-19:00, no domingos. Futuro solo al agendar
+    // (la atencion ocurre despues, por eso Cita.fechaHora ya no lleva @Future).
     private void validarHorario(LocalDateTime fechaHora) {
         if (fechaHora == null) return;
+        if (fechaHora.isBefore(LocalDateTime.now().minusMinutes(1))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La cita debe ser en el futuro");
+        }
         var dia = fechaHora.getDayOfWeek();
         int hora = fechaHora.getHour();
         if (dia == java.time.DayOfWeek.SUNDAY) {
@@ -119,9 +135,18 @@ public class CitaService {
         }
     }
 
+    private String normalizarModalidad(String modalidad) {
+        if (modalidad == null) return "PRESENCIAL";
+        String m = modalidad.trim().toUpperCase();
+        if (!m.equals("PRESENCIAL") && !m.equals("TELECONSULTA")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Modalidad invalida. Usa: PRESENCIAL, TELECONSULTA");
+        }
+        return m;
+    }
+
     // MinSalud Colombia: 20 min por cita, bloquea ±20 min para evitar solapamientos
-    private boolean estaLibre(Long medicoId, LocalDateTime fechaHora) {
-        LocalDateTime inicio = fechaHora.minusMinutes(20);
+    private boolean estaLibre(Long medicoId, LocalDateTime fechaHora) {        LocalDateTime inicio = fechaHora.minusMinutes(20);
         LocalDateTime fin = fechaHora.plusMinutes(20);
         List<Cita> solapadas = citaRepository.findByMedicoIdAndFechaHoraBetween(medicoId, inicio, fin)
                 .stream()

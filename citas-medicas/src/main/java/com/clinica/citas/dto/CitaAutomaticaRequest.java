@@ -18,6 +18,8 @@ public class CitaAutomaticaRequest {
 
     private String motivo;
 
+    private String modalidad = "PRESENCIAL";
+
     public Long getPacienteId() { return pacienteId; }
     public void setPacienteId(Long pacienteId) { this.pacienteId = pacienteId; }
     public String getEspecialidad() { return especialidad; }
@@ -26,4 +28,6 @@ public class CitaAutomaticaRequest {
     public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
     public String getMotivo() { return motivo; }
     public void setMotivo(String motivo) { this.motivo = motivo; }
+    public String getModalidad() { return modalidad; }
+    public void setModalidad(String modalidad) { this.modalidad = modalidad; }
 }

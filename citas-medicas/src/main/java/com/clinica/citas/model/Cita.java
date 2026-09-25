@@ -1,7 +1,6 @@
 package com.clinica.citas.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
@@ -23,13 +22,18 @@ public class Cita {
     private Medico medico;
 
     @NotNull(message = "La fecha/hora es obligatoria")
-    @Future(message = "La cita debe ser en el futuro")
     private LocalDateTime fechaHora;
 
     private String motivo;
 
     @Enumerated(EnumType.STRING)
     private EstadoCita estado = EstadoCita.PENDIENTE;
+
+    // Teleconsulta (Res. 2654/2019 telesalud Colombia)
+    private String modalidad = "PRESENCIAL";
+
+    @Column(length = 500)
+    private String linkTeleconsulta;
 
     public Cita() {}
 
@@ -45,4 +49,8 @@ public class Cita {
     public void setMotivo(String motivo) { this.motivo = motivo; }
     public EstadoCita getEstado() { return estado; }
     public void setEstado(EstadoCita estado) { this.estado = estado; }
+    public String getModalidad() { return modalidad; }
+    public void setModalidad(String modalidad) { this.modalidad = modalidad; }
+    public String getLinkTeleconsulta() { return linkTeleconsulta; }
+    public void setLinkTeleconsulta(String linkTeleconsulta) { this.linkTeleconsulta = linkTeleconsulta; }
 }
