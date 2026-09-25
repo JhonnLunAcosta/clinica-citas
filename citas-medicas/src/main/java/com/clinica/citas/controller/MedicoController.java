@@ -20,7 +20,7 @@ public class MedicoController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER','MEDICO')")
     public List<Medico> listar(@RequestParam(required = false) String especialidad) {
         if (especialidad != null && !especialidad.isBlank()) {
             return repository.findByEspecialidadIgnoreCase(especialidad);
@@ -29,7 +29,7 @@ public class MedicoController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER','MEDICO')")
     public Medico obtener(@PathVariable Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Medico no encontrado"));

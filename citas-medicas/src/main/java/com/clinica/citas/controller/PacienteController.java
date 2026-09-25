@@ -20,11 +20,11 @@ public class PacienteController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER','MEDICO')")
     public List<Paciente> listar() { return repository.findAll(); }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER','MEDICO')")
     public Paciente obtener(@PathVariable Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paciente no encontrado"));
@@ -32,18 +32,25 @@ public class PacienteController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER','MEDICO')")
     public Paciente crear(@Valid @RequestBody Paciente paciente) {
         return repository.save(paciente);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER','MEDICO')")
     public Paciente actualizar(@PathVariable Long id, @Valid @RequestBody Paciente datos) {
         Paciente p = obtener(id);
         p.setNombre(datos.getNombre());
         p.setEmail(datos.getEmail());
         p.setTelefono(datos.getTelefono());
+        p.setDocumento(datos.getDocumento());
+        p.setFechaNacimiento(datos.getFechaNacimiento());
+        p.setSexo(datos.getSexo());
+        p.setEps(datos.getEps());
+        p.setRh(datos.getRh());
+        p.setAlergias(datos.getAlergias());
+        p.setContactoEmergencia(datos.getContactoEmergencia());
         return repository.save(p);
     }
 

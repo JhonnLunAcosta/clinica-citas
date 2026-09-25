@@ -38,6 +38,9 @@ public class AuthController {
         u.setUsername(req.getUsername());
         u.setPassword(encoder.encode(req.getPassword()));
         String rol = req.getRol() == null ? "USER" : req.getRol().toUpperCase();
+        if (!rol.equals("ADMIN") && !rol.equals("USER") && !rol.equals("MEDICO")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rol invalido. Usa: ADMIN, USER, MEDICO");
+        }
         u.setRol(rol);
         usuarios.save(u);
         return new AuthResponse(jwt.generate(u.getUsername(), u.getRol()), u.getUsername(), u.getRol());

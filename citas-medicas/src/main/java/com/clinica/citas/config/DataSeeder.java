@@ -27,6 +27,23 @@ public class DataSeeder {
                 r.setRol("USER");
                 usuarios.save(r);
             }
+            if (!usuarios.existsByUsername("medico")) {
+                Usuario m = new Usuario();
+                m.setUsername("medico");
+                m.setPassword(encoder.encode("medico123"));
+                m.setRol("MEDICO");
+                m.setActivo(true);
+                usuarios.save(m);
+            }
+            // Migración: cuentas creadas antes de la columna 'activo' quedaron en false
+            usuarios.findAll().forEach(u -> {
+                if (!u.isActivo() && ("admin".equals(u.getUsername())
+                        || "recepcion".equals(u.getUsername())
+                        || "medico".equals(u.getUsername()))) {
+                    u.setActivo(true);
+                    usuarios.save(u);
+                }
+            });
         };
     }
 }

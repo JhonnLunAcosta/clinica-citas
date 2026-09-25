@@ -23,11 +23,11 @@ public class CitaController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER','MEDICO')")
     public List<Cita> listar() { return service.listar(); }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER','MEDICO')")
     public Cita obtener(@PathVariable Long id) { return service.obtener(id); }
 
     @PostMapping
@@ -46,7 +46,7 @@ public class CitaController {
     }
 
     @PatchMapping("/{id}/estado")
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER','MEDICO')")
     public Cita cambiarEstado(@PathVariable Long id, @RequestBody Map<String, String> body) {
         if (body == null || body.get("estado") == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debes enviar {\"estado\":\"CONFIRMADA\"}");
