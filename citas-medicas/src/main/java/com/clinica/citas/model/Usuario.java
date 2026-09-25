@@ -21,6 +21,9 @@ public class Usuario {
     @NotBlank
     private String rol = "USER";
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean activo = true;
+
     public Usuario() {}
 
     public Long getId() { return id; }
@@ -31,4 +34,6 @@ public class Usuario {
     public void setPassword(String password) { this.password = password; }
     public String getRol() { return rol; }
     public void setRol(String rol) { this.rol = rol; }
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean activo) { this.activo = activo; }
 }

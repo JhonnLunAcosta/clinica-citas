@@ -54,4 +54,28 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleAuth(AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autenticado"));
     }
+
+    @ExceptionHandler(org.springframework.security.authentication.DisabledException.class)
+    public ResponseEntity<Map<String, String>> handleDisabled(org.springframework.security.authentication.DisabledException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Cuenta desactivada. Contacta al administrador"));
+    }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<Map<String, String>> handleConstraint(jakarta.validation.ConstraintViolationException ex) {
+        String msg = ex.getConstraintViolations().stream()
+                .map(v -> v.getMessage())
+                .findFirst().orElse("Dato inválido");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", msg));
+    }
+
+    @ExceptionHandler(org.springframework.transaction.TransactionSystemException.class)
+    public ResponseEntity<Map<String, String>> handleTx(org.springframework.transaction.TransactionSystemException ex) {
+        Throwable causa = ex.getRootCause();
+        if (causa instanceof jakarta.validation.ConstraintViolationException cve) {
+            return handleConstraint(cve);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "No se pudo guardar: revisa los datos enviados"));
+    }
 }
