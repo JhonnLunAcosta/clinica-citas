@@ -30,6 +30,7 @@ API: `http://localhost:8080`
 Al arrancar se crean solos (ver `config/DataSeeder.java`):
 - `admin / admin123` rol ADMIN
 - `recepcion / recepcion123` rol USER
+- `medico / medico123` rol MEDICO
 
 ## Autenticación JWT
 1. Login:
@@ -52,8 +53,9 @@ Authorization: Bearer <token-admin>
 ```
 
 ## Roles
-- **ADMIN**: todo (crear/editar/borrar médicos, borrar pacientes/citas, registrar usuarios)
-- **USER (recepción)**: leer médicos, CRUD pacientes (menos borrar), CRUD citas (menos borrar). No puede crear médicos → `403 {"error":"No tienes permiso (se requiere ADMIN)"}`
+- **ADMIN**: todo (crear/editar/borrar médicos, borrar pacientes/citas, gestionar usuarios en `/api/usuarios`, leer consultas/historia)
+- **USER (recepción)**: leer médicos, CRUD pacientes (menos borrar), CRUD citas (menos borrar). No puede crear médicos → `403 {"error":"No tienes permiso (se requiere ADMIN)"}`. No puede ver consultas/historia ni usuarios → `403`
+- **MEDICO**: leer médicos/pacientes/citas, atender consultas, ver historia. No puede crear médicos, ni borrar, ni gestionar usuarios
 
 ## Endpoints
 ### Médicos `/api/medicos`
@@ -76,6 +78,51 @@ Authorization: Bearer <token-admin>
 - `DELETE /api/citas/{id}` (ADMIN)
 
 Estados: `PENDIENTE, CONFIRMADA, CANCELADA, COMPLETADA`
+
+### Consultas `/api/consultas` (MEDICO, ADMIN. USER bloqueado)
+- `GET /api/consultas`, `GET /api/consultas/{id}`
+- `POST /api/consultas` — atiende una cita CONFIRMADA (la pasa a COMPLETADA). 1 cita → 1 consulta. Requiere ≥1 diagnóstico CIE-10:
+```json
+{
+  "citaId": 1,
+  "enfermedadActual": "Tos y fiebre hace 3 dias",
+  "presionSistolica": 145, "presionDiastolica": 92,
+  "temperatura": 38.5, "pesoKg": 95, "tallaCm": 170,
+  "examenFisico": "Farige hiperemica",
+  "diagnosticos": [{"codigo": "J06.9", "descripcion": "Infeccion respiratoria", "tipo": "PRINCIPAL"}],
+  "formulas": [{"medicamento": "Amoxicilina", "dosis": "500mg", "frecuencia": "Cada 8h", "duracion": "7 dias"}],
+  "plan": "Control en 7 dias",
+  "proximaCita": "2026-10-05"
+}
+```
+Respuesta incluye `imc` calculado y `alertas` (reglas explicables: TA elevada, IMC, fiebre, cruce alergia vs fórmula). No es diagnóstico automático.
+- Errores: cita PENDIENTE → `400 confirma antes`; CANCELADA → `400`; consulta duplicada → `409`; USER → `403`.
+
+### Historia `/api/historia/{pacienteId}` (MEDICO, ADMIN)
+Documento clínico por paciente según Res. 1995/1999 (identificación, motivo, enfermedad actual, antecedentes, revisión por sistemas, signos, examen, CIE-10, plan, fórmula, anexos). El front la presenta en formato de historia con impresión.
+
+### Adjuntos `/api/consultas/{id}/adjuntos` (MEDICO, ADMIN)
+- `POST` multipart `file` (PDF/JPG/PNG, máx 10MB: resultados, imágenes, remisiones). Guarda en `./uploads` + metadatos en `adjuntos`.
+- `GET /api/consultas/{id}/adjuntos`, `GET /api/adjuntos/{id}/descargar`.
+
+### Teleconsulta (Res. 2654/2019)
+- `Cita.modalidad`: PRESENCIAL | TELECONSULTA. Al agendar virtual se genera `linkTeleconsulta` (Jitsi `meet.jit.si/clinica-cita-{id}`).
+- El front muestra “Unirse al video”. Requiere internet y consentimiento del paciente; la atención se registra igual en `POST /api/consultas`.
+
+### Panel estadístico `/api/stats`
+- `GET /resumen`, `/citas-por-dia?dias=14` (ADMIN, USER, MEDICO)
+- `GET /top-diagnosticos`, `/consultas-por-medico`, `/signos` (ADMIN, MEDICO). Recepción no ve detalle clínico.
+
+### Catálogos en BD `/api/catalogo` (ADMIN, USER, MEDICO)
+Nada quemado en el front: todo sale de MySQL (`cie10_catalogo`, `medicamentos_catalogo`).
+- `GET /api/catalogo/diagnosticos?q=fiebre&limit=10` → página con `{codigo, descripcion, grupo}`
+- `GET /api/catalogo/medicamentos?q=amoxi&limit=10` → página con `{codigo, nombre, concentracion, formaFarmaceutica}`
+- `GET /api/catalogo/eps` → lista de EPS activas (`eps_catalogo`) para el desplegable del paciente
+- Semilla inicial: 24 CIE-10 frecuentes + 20 medicamentos esenciales (`config/CatalogoSeeder.java`). No es el oficial completo.
+- Norma Colombia: CIE-10 OMS adoptado por MinSalud; medicamentos referencia INVIMA/CUM. Para producción, cargar CSV oficial con job de importación (pendiente).
+
+### Pacientes: campos nuevos
+`documento (único), fechaNacimiento, sexo, eps, rh, alergias, contactoEmergencia`. Todos opcionales para no romper datos existentes.
 
 ## Validaciones automáticas
 - Fecha futura (`@Future`), horario Lun-Sáb 07:00-19:00, domingos bloqueados
