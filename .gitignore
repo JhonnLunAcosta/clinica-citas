@@ -18,3 +18,12 @@ citas-frontend/*.local
 *.iml
 .DS_Store
 Thumbs.db
+
+# Local - no subir
+*.docx
+~$*.docx
+GITHUB_PROFILE_README.md
+LINKEDIN_KIT.md
+peopledna-clone/
+farma-predict/
+citas-medicas/src/main/java/com/clinica/citas/citas-medicas.code-workspace
